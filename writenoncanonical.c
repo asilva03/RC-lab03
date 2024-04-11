@@ -21,7 +21,8 @@ int main(int argc, char** argv)
 {
    int fd,c, res;
    struct termios oldtio,newtio;
-   char buf[255];
+   unsigned char buf[5];
+   unsigned char buffer[5];
    int i, sum = 0, speed = 0;
 
    if ( (argc < 2) ||
@@ -55,7 +56,7 @@ int main(int argc, char** argv)
    newtio.c_lflag = 0;
 
    newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
-   newtio.c_cc[VMIN]     = 5;   /* blocking read until 5 chars received */
+   newtio.c_cc[VMIN]     = 3;   /* blocking read until 5 chars received */
 
 
 
@@ -75,16 +76,25 @@ int main(int argc, char** argv)
    printf("New termios structure set\n");
 
 
-
+/*
    for (i = 0; i < 255; i++) {
        buf[i] = 'a';
    }
+*/
+
+   buf[0] = 0x5c;
+   buf[1] = 0x01;
+   buf[2] = 0x08;
+   buf[3] = 0xF8;
+   buf[4] = 0x5c;       
 
    /*testing*/
-   buf[25] = '\n';
-
-   res = write(fd,buf,255);
+   res = write(fd,buffer,5);
    printf("%d bytes written\n", res);
+
+   for (i = 0; i < 5; i++) {
+       printf("%02x \n", (unsigned char)buffer[i]);
+   }
 
 
    /*
