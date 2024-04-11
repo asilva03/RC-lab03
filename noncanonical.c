@@ -24,20 +24,13 @@ int main(int argc, char** argv)
    char buf[255];
    int i, sum = 0, speed = 0;
    /*
-   Os termos "oldtio" e "newtio" são frequentemente usados em 
-   programas C que lidam com comunicação serial para se referir a estruturas que armazenam os atributos do termi
-   nal antes e depois de serem modificados. Aqui está o que esses termos geralmente representam:
-
    oldtio: Esta é uma estrutura que armazena os atributos do
    terminal antes de serem modificados. É comum salvar esses atributos antes de fazer mudanças no 
-   terminal para que possam ser 
-   restaurados posteriormente quando não forem mais necessários. 
-   A estrutura oldtio geralmente é do tipo struct termios.
+   terminal para que possam ser restaurados posteriormente quando não forem mais necessários. 
 
-   newtio: Esta é uma estrutura que armazena os novos atributos do term
-   inal que serão aplicados. Quando você deseja modificar os atributos do terminal, 
-   você preenche a estrutura newtio com os valores
-   desejados e aplica essas alterações ao terminal. A estrutura newtio também é do tipo struct termios.
+   newtio: Esta é uma estrutura que armazena os novos atributos do terminal que serão aplicados.
+   Quando você deseja modificar os atributos do terminal, você preenche a estrutura newtio com os valores
+   desejados e aplica essas alterações ao terminal. 
    */
 
 
