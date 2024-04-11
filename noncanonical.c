@@ -41,21 +41,22 @@ int main(int argc, char** argv)
        printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
        exit(1);
    }
-   /*/dev/ttyS0 é um caminho de dispositivo no sistema de arquivos do Linux que 
+   /*
+   /dev/ttyS0 é um caminho de dispositivo no sistema de arquivos do Linux que 
    representa uma porta serial de hardware.
+   
    dev: Este é o diretório no sistema de arquivos do Linux onde estão 
    localizados os arquivos de dispositivos.
-
+   
    ttyS0: Este é o nome do dispositivo serial. 
    No Linux, os dispositivos seriais são nomeados como ttyS0, ttyS1, ttyS2, e assim por diante. 
    O número após o ttyS indica a porta serial específica.
-   Por exemplo, /dev/ttyS0 representa a primeira porta serial no sistema.*/
+   Por exemplo, /dev/ttyS0 representa a primeira porta serial no sistema.
 
-
-   /*
    Open serial port device for reading and writing and not as controlling tty
    because we don't want to get killed if linenoise sends CTRL-C.
    */
+   
    //O_RDWR indica que o arquivo será aberto para leitura e escrita.
    //O_NOCTTY indica que o arquivo não será o terminal de controle do processo.
 
@@ -80,6 +81,7 @@ int main(int argc, char** argv)
 
    newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
    newtio.c_cc[VMIN]     = 5;   /* blocking read until 5 chars received */
+   
 /*    newtio.c_lflag = 0;:
        c_lflag é um membro da estrutura termios que controla os modos de operação local do terminal.
        A configuração newtio.c_lflag = 0; desativa todos os modos de operação local do terminal. 
@@ -128,7 +130,6 @@ int main(int argc, char** argv)
    //escreve no ficheiro associado a fd 255 caracteres do buf
    res = write(fd,buf,255);
    printf("%d bytes written\n", res);
-
 
    /*
    O ciclo FOR e as instruções seguintes devem ser alterados de modo a respeitar
