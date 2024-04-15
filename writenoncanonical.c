@@ -21,8 +21,8 @@ int main(int argc, char** argv)
 {
    int fd,c, res;
    struct termios oldtio,newtio;
-   unsigned char buf[5];
-   unsigned char buffer[5];
+   unsigned char bufw[5];
+   unsigned char bufr[5];
    int i, sum = 0, speed = 0;
 
    if ( (argc < 2) ||
@@ -82,18 +82,18 @@ int main(int argc, char** argv)
    }
 */
 
-   buf[0] = 0x5c;
-   buf[1] = 0x01;
-   buf[2] = 0x08;
-   buf[3] = 0xF8;
-   buf[4] = 0x5c;       
+   bufw[0] = 0x5c;
+   bufw[1] = 0x01;
+   bufw[2] = 0x08;
+   bufw[3] = 0xF8;
+   bufw[4] = 0x5c;       
 
    /*testing*/
-   res = write(fd,buffer,5);
+   res = write(fd,bufw,5);
    printf("%d bytes written\n", res);
 
    for (i = 0; i < 5; i++) {
-       printf("%02x \n", (unsigned char)buffer[i]);
+       printf("%02x \n", (unsigned char)bufw[i]);
    }
 
    if(read(fd,bufr,5) < 0){
