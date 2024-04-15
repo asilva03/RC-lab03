@@ -12,6 +12,11 @@ open(), close(), fcntl e fcntl(fd, F_GETFL) e fcntl(fd, F_SETFL, flags) estão t
 ao controle de descritores de arquivo, mas cada uma executa uma tarefa diferente. Trabam com flags 
 de status do descritor de arquivo(variável inteira associada ao arquivo).
 */
+//noncanonical.c escreve na porta 0
+/*Portanto, o programa noncanonical.c lida com a entrada e saída de dados da porta serial de forma "não convencional"
+ ou "não canônica", ou seja, sem a interpretação especial de caracteres de controle. Isso pode ser útil em situações
+  em que você precisa lidar com dados binários ou em que deseja ter mais controle sobre como os dados são tratados,
+sem depender de convenções específicas de formatação de texto.*/
 
 #define BAUDRATE B38400 // Número de simbolos(bits) transmitidos por segundo, ou seja 38400 b/s.
 #define MODEMDEVICE "/dev/ttyS1"
@@ -24,9 +29,12 @@ volatile int STOP=FALSE;
 int main(int argc, char** argv)
 {
    int fd,c, res;
+   /*file descriptor(fd).O parâmetro fd na função tcflush representa o 
+   descritor de arquivo associado ao terminal que se deseja manipular.
+   */
    struct termios oldtio,newtio;
-   unsigned char buf[5];
-   int i, sum = 0, speed = 0;
+   unsigned char bufw[255], bufr[255];
+   int i, sum = 0, speed = 0, STATE=0;
    //temos que criar uma maquina de estados de leitura
    //mudamos que estado sempre que recebemos uma flag diferente
 
@@ -57,7 +65,11 @@ int main(int argc, char** argv)
    */
    
    //O_RDWR indica que o arquivo será aberto para leitura e escrita.
-   //O_NOCTTY indica que o arquivo não será o terminal de controle do processo.
+   /*O_NOCTTY indica que o file descriptor (dev), associoado a porta serial ttyS0, por exemplo
+    não será o terminal de controlo deste processo, ou seja, impede que ocorra interferências por parte
+    do uso do terminal associado a este programa
+    na ligação com outro file descriptor (dev), associado a uma porta serial ttyS1, por exemplo 
+    */
 
    //define fd como int associado a argv
    fd = open(argv[1], O_RDWR | O_NOCTTY ); //O |,  é uma fomra dos SO linux e Unix, de
@@ -71,14 +83,29 @@ int main(int argc, char** argv)
   
    //Inicializa o struct a zero e preenche 3 flags
    bzero(&newtio, sizeof(newtio));
-   newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+   newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD; //operador | (OR bit a bit)
    newtio.c_iflag = IGNPAR;
-   newtio.c_oflag = 0;
+   newtio.c_oflag = 0; //desativa todos os flags de controle de saída da estrutura, útil quando não há necessidade de controle especial sobre a saída dos dados 
+   /*
+    BAUDRATE: Define a taxa de transmissão (baud rate) da comunicação serial.
+    CS8: Configura o tamanho dos caracteres para 8 bits por byte.
+    CLOCAL: Indica que a linha não é usada por um modem externo (ou seja, a conexão é local).
+    CREAD: Ativa a recepção de caracteres.
+    IGNPAR: Esta constante indica que os bytes de entrada com erros de paridade devem ser ignorado, sou seja, 
+    o sistema operacional não reportará esses erros e os bytes serão tratados como se não contivessem erros.
+   */
 
    /* set input mode (non-canonical, no echo,...) */
    newtio.c_lflag = 0;
-
-   newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
+    /*
+    A configuração newtio.c_lflag = 0; desativa todos os modos de operação local do terminal.
+    isso inclui modos como ICANON (modo canônico) e ECHO (eco dos caracteres digitados). 
+    Quando esses modos estão desativados, o terminal opera em modo não canônico, o que significa que a entrada é processada
+    imediatamente, caractere por caractere, sem esperar por uma nova linha ou qualquer outra interação do usuário. 
+    Além disso, nenhum eco dos caracteres digitados é feito. 
+    Isso é útil em situações em que se deseja um controle total sobre o processamento da entrada e saída do terminal.
+    */
+   newtio.c_cc[VTIME]    = 50;   /* inter-character timer unused. Da 1s de timeout */ 
    newtio.c_cc[VMIN]     = 5;   /* blocking read until 5 chars received */
    
 /*    newtio.c_lflag = 0;:
@@ -114,35 +141,97 @@ int main(int argc, char** argv)
        perror("tcsetattr");
        exit(-1);
    }
-
+   /*Apartir deste momento, o terminal está corretamente configurado para manipulação dos dados
+    com as configurações da estrutura newtio*/
    printf("New termios structure set\n");
 
  
-   buf[0] = 0x5c;
-   buf[1] = 0x03;
-   buf[2] = 0x06;
-   buf[3] = buf[1] ^ buf[2];
-   buf[4] = 0x5c;
+   bufw[0] = 0x5c;
+   bufw[1] = 0x03;
+   bufw[2] = 0x06;
+   bufw[3] = bufw[1] ^ bufw[2];
+   bufw[4] = 0x5c;
 
-
-
-   //escreve no ficheiro associado a fd 255 caracteres do buf
-   res = write(fd,buf,5);
-  printf("%d bytes written\n", res);
-   /*
-   O ciclo FOR e as instruções seguintes devem ser alterados de modo a respeitar
-   o indicado no guião
-   */
-   for ( int i=0;i<5;i++){
-       printf("%02x \n", buf[i]);
+   for (i=0;i<5;i++){
+       printf("%02x \n", bufw[i]);
    }
+   
+   printf("Receive:\n");
 
-   //define os parametros de oldtio
+   if((res = read(fd,bufr,5)) < 0) perror("Erro de leitura");
+   for(i = 0; i < 5; i++) printf(": %02x\n", bufr[i]);
+
+   unsigned char XOR = 0x01 ^ 0x08;
+
+  while(STOP == FALSE){
+
+    if(STATE == 0) {
+        STATE++;
+        i = 0;
+    }
+
+    switch (STATE)
+    {
+    case 1:
+        if(bufr[i] == 0x5c){
+            STATE = 2;
+            i++;
+        }
+        else STATE = 0;
+        break;
+    case 2:
+        if(bufr[i] == 0x01){
+            STATE = 3;
+            i++;
+        }
+        else STATE = 0;
+        break;
+    case 3:
+
+        if(bufr[i] == 0x08){
+            STATE = 4;
+            i++;
+        }
+        else STATE = 0;
+        break;
+    case 4:
+
+        if(bufr[i] == XOR){; 
+
+            STATE = 5;
+            i++;
+        }
+        else printf("Erro na comparação");
+        break;
+    case 5:
+
+        if(bufr[i] == 0x5c){
+            STATE = 6;
+        }
+        else STATE = 0;
+        break;
+    
+    default:
+
+        STOP = TRUE;
+        printf("%d", STOP);
+        
+        break;
+    }
+}
+    if (STOP == TRUE){
+        lseek(fd,0,SEEK_SET);
+        printf("%d", STOP);
+        res = write(fd, bufw, 5);
+    }
+    else perror("UA não enviado");
+
+   /*o terminal volta as configurações originais devido ao facto de certas aplicações 
+     não definem as proprias configurações de terminal, por isso é importante voltar as definições originais*/
    if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
        perror("tcsetattr");
        exit(-1);
    }
-
 
    close(fd);
   return 0;

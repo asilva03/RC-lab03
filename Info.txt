@@ -24,9 +24,11 @@ git remote set-url origin https://github.com/asilva03/RC-lab03.git ---- atualiza
 git branch -M tiago ---- você estará renomeando o branch atual para "tiago". Isso não cria um novo branch,
 mas renomeia o branch atual para "tiago".  Se não houver um branch chamado "tiago" atualmente, ele será
 criado e você estará nele após a execução do comando.
-git push -u origin tiago ---- para guardar as alterações feitas no repositório
+git push -u origin tiago ---- para criar uma linha de alterações para cada um de nós
 git config --global user.name "Seu Nome"
 git config --global user.email "seu@email.com"
+git push origin main ---- para guardar as alterações no repositório
+
 
 
 
