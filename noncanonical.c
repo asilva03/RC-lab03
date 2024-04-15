@@ -23,7 +23,7 @@ int main(int argc, char** argv)
    struct termios oldtio,newtio;
    unsigned char bufw[5];
    unsigned char bufr[5];
-   int i, sum = 0, speed = 0;
+   int i, sum = 0, speed = 0, STATE=0;
    //temos que criar uma maquina de estados de leitura
    //mudamos que estado sempre que recebemos uma flag diferente
    
