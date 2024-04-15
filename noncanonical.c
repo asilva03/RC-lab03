@@ -138,9 +138,84 @@ int main(int argc, char** argv)
    O ciclo FOR e as instruções seguintes devem ser alterados de modo a respeitar
    o indicado no guião
    */
-   for ( int i=0;i<5;i++){
+   for (int i=0;i<5;i++){
        printf("%02x \n", bufw[i]);
    }
+
+   if(read(fd,bufr,5) < 0){
+      perror("Erro de leitura");
+   }
+   else{
+      for(i = 0; i < 5; i++){
+         printf(": %02x\n", bufr[i]);
+      }
+   }
+
+
+   unsigned char XOR = 0x01 ^ 0x08;
+
+   while(STOP == FALSE){
+
+      if(STATE == 0) {
+          STATE++;
+          i = 0;
+      }
+
+      switch (STATE){
+       case 1:
+           if(bufr[i] == 0x5c){
+               STATE = 2;
+               i++;
+           }
+           else STATE = 0;
+           break;
+       case 2:
+           if(bufr[i] == 0x01){
+               STATE = 3;
+               i++;
+           }
+           else STATE = 0;
+           break;
+       case 3:
+   
+           if(bufr[i] == 0x08){
+               STATE = 4;
+               i++;
+           }
+           else STATE = 0;
+           break;
+       case 4:
+   
+           if(bufr[i] == XOR){; 
+   
+               STATE = 5;
+               i++;
+           }
+           else printf("Erro na comparação");
+           break;
+       case 5:
+   
+           if(bufr[i] == 0x5c){
+               STATE = 6;
+           }
+           else STATE = 0;
+           break;
+       
+       default:
+   
+           STOP = TRUE;
+           printf("%d", STOP);
+           
+           break;
+       }
+   }
+    if (STOP == TRUE){
+        lseek(fd,0,SEEK_SET);
+        printf("%d", STOP);
+        res = write(fd, bufw, 5);
+    }
+    else perror("UA não enviado");
+   
 
    //define os parametros de oldtio
    if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
