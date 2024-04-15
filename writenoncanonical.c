@@ -16,7 +16,7 @@
 #define TRUE 1
 
 volatile int STOP=FALSE;
-
+//Usar o comando -> man "função a pesquisar" para saber mais sobre a mesma, no terminal do SO linux
 int main(int argc, char** argv)
 {
    int fd,c, res;

@@ -2,14 +2,18 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <termios.h> // termios.h é uma biblioteca que fornece a estrutura necessária guardar 
+#include <stdio.h>  //todos os parâmentros das portas portas série (oldtio e newtio).
+#include <stdlib.h> //Também fornece as funções tcgetattr(), tcflush(), tcsetattr().
 #include <string.h>
-#include <unistd.h>
+#include <unistd.h>//Fornece o uso das funções read() e write()
+#include <fcntl.h>/* Fornece várias funções relacionadas ao controle de descritores de arquivos.
+open(), close(), fcntl e fcntl(fd, F_GETFL) e fcntl(fd, F_SETFL, flags) estão todas relacionadas
+ao controle de descritores de arquivo, mas cada uma executa uma tarefa diferente. Trabam com flags 
+de status do descritor de arquivo(variável inteira associada ao arquivo).
+*/
 
-#define BAUDRATE B38400 //Na verdade, BAUDRATE  é o número de simbolos transmitidos pelo tempo
+#define BAUDRATE B38400 // Número de simbolos(bits) transmitidos por segundo, ou seja 38400 b/s.
 #define MODEMDEVICE "/dev/ttyS1"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
@@ -25,19 +29,11 @@ int main(int argc, char** argv)
    int i, sum = 0, speed = 0;
    //temos que criar uma maquina de estados de leitura
    //mudamos que estado sempre que recebemos uma flag diferente
-   
-   /*
-   oldtio: Esta é uma estrutura que armazena os atributos do
-   terminal antes de serem modificados. É comum salvar esses atributos antes de fazer mudanças no 
-   terminal para que possam ser restaurados posteriormente quando não forem mais necessários. 
 
-   newtio: Esta é uma estrutura que armazena os novos atributos do terminal que serão aplicados.
-   Quando você deseja modificar os atributos do terminal, você preenche a estrutura newtio com os valores
-   desejados e aplica essas alterações ao terminal. 
+
+   /* recebe a segunda string dada pelo terminal(strings escritas por nós pelo terminal 
+   que são separadas por ' ').
    */
-
-
-   // se não estiver a receber nada escreve
    if ( (argc < 2) ||
         ((strcmp("/dev/ttyS0", argv[1])!=0) &&
          (strcmp("/dev/ttyS1", argv[1])!=0) )) {
@@ -64,8 +60,8 @@ int main(int argc, char** argv)
    //O_NOCTTY indica que o arquivo não será o terminal de controle do processo.
 
    //define fd como int associado a argv
-   fd = open(argv[1], O_RDWR | O_NOCTTY );
-   if (fd < 0) { perror(argv[1]); exit(-1); }
+   fd = open(argv[1], O_RDWR | O_NOCTTY ); //O |,  é uma fomra dos SO linux e Unix, de
+   if (fd < 0) { perror(argv[1]); exit(-1); }//adicionar funções a função
 
    //guarda os parametros associados a fd em oldtio
    if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */

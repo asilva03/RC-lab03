@@ -1,0 +1,52 @@
+# RC-lab03
+
+Comandos úteis:
+
+stty -F /dev/ttyS0 38400 ----   mudar a taxa de transmissão da porta serie para 38400 bps
+sudo lsof /dev/ttyS0 ----  verificar as ligações da porta serie
+ls /dev/ttyS*   ----  mostra todos os descritores de arquivo das portas series disponiveis
+dmesg | grep ttyS10  ----   mensagens do kernel 
+ps -aux | grep dev ---- ver os processos associados a pasta dev
+man biblioteca ---- para aceder a todas as informações de uma biblioteca 
+nano arquivo.txt ---- abrir arquivo de texto em linux
+chmod +(1) (2) ---- (1) = r,w ou x. (2) = nome da pasta ou arquivo a dar permisões
+sudo apt-get install minicom ----
+sudo minicom -D /dev/ttyS0 ---- serve para simular o gtk com um terminal
+sudo minicom -D /dev/ttyS1
+sudo socat -d -d PTY,link=/dev/ttyS0,mode=777 PTY,link=/dev/ttyS1,mode=777 ---- conecta das portas serie
+sudo stty -F /dev/ttyS0 38400; sudo stty -F /dev/ttyS1 38400 ---- muda a taxa de transmissão das duas portas ao mesmo tempo
+(este comando funciona mesmo depois do processo socat a decorrer)
+
+Comandos github:
+
+git remote add origin https://github.com/asilva03/RC-lab03.git
+git remote set-url origin https://github.com/asilva03/RC-lab03.git ---- atualiza o link
+git branch -M tiago ---- você estará renomeando o branch atual para "tiago". Isso não cria um novo branch,
+mas renomeia o branch atual para "tiago".  Se não houver um branch chamado "tiago" atualmente, ele será
+criado e você estará nele após a execução do comando.
+git push -u origin tiago ---- para guardar as alterações feitas no repositório
+git config --global user.name "Seu Nome"
+git config --global user.email "seu@email.com"
+
+
+
+
+Informações adicionais: 
+
+I (Information): Esses quadros carregam os dados do usuário. 
+Eles são usados para transportar dados entre a camada de enlace de dados (datalink)e a camada de rede (network).
+Eles são enviados em ambos os sentidos entre as duas extremidades da comunicação serial.
+
+SET (Set-Up): Este é um quadro de configuração usado para estabelecer uma conexão entre as duas extremidades.
+É enviado pela estação de controle primária (Primary Station) para solicitar a estação de controle secundária (Secondary Station) a responder com um UA (Unnumbered Acknowledgement).
+
+DISC (Disconnect): Este quadro é enviado pela estação primária para solicitar a desconexão da estação secundária. 
+Após receber um DISC, a estação secundária envia um UA para confirmar o término da conexão.
+
+UA (Unnumbered Acknowledgement): Este quadro é uma confirmação de que um quadro SET ou DISC foi recebido e reconhecido com sucesso.
+
+RR (Receive Ready): Este é um quadro usado para confirmação de quadros recebidos. 
+Ele informa ao remetente que a estação receptora está pronta para receber mais dados.
+
+REJ (Reject): Este quadro é enviado quando um quadro é recebido com erro. 
+Ele solicita uma retransmissão do quadro anterior.
