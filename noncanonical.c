@@ -21,7 +21,8 @@ int main(int argc, char** argv)
 {
    int fd,c, res;
    struct termios oldtio,newtio;
-   unsigned char buf[5];
+   unsigned char bufw[5];
+   unsigned char bufr[5];
    int i, sum = 0, speed = 0;
    //temos que criar uma maquina de estados de leitura
    //mudamos que estado sempre que recebemos uma flag diferente
@@ -122,23 +123,23 @@ int main(int argc, char** argv)
    printf("New termios structure set\n");
 
  
-   buf[0] = 0x5c;
-   buf[1] = 0x03;
-   buf[2] = 0x06;
-   buf[3] = buf[1] ^ buf[2];
-   buf[4] = 0x5c;
+   bufw[0] = 0x5c;
+   bufw[1] = 0x03;
+   bufw[2] = 0x06;
+   bufw[3] = bufw[1] ^ bufw[2];
+   bufw[4] = 0x5c;
 
 
 
    //escreve no ficheiro associado a fd 255 caracteres do buf
-   res = write(fd,buf,5);
-  printf("%d bytes written\n", res);
+   res = write(fd,bufw,5);
+   printf("%d bytes written\n", res);
    /*
    O ciclo FOR e as instruções seguintes devem ser alterados de modo a respeitar
    o indicado no guião
    */
    for ( int i=0;i<5;i++){
-       printf("%02x \n", buf[i]);
+       printf("%02x \n", bufw[i]);
    }
 
    //define os parametros de oldtio
