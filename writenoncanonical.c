@@ -96,6 +96,14 @@ int main(int argc, char** argv)
        printf("%02x \n", (unsigned char)buffer[i]);
    }
 
+   if(read(fd,bufr,5) < 0){
+      perror("Erro de leitura");
+   }
+   else{
+      for(i = 0; i < 5; i++){
+         printf(": %02x\n", bufr[i]);
+      }
+   }
 
    /*
    O ciclo FOR e as instruções seguintes devem ser alterados de modo a respeitar
