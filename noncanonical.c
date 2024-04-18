@@ -34,7 +34,7 @@ int main(int argc, char** argv)
    */
    struct termios oldtio,newtio;
    unsigned char bufw[255], bufr[255];
-   int i, sum = 0, speed = 0, STATE=0;
+   int i=0, sum = 0, speed = 0, STATE=0;
    //temos que criar uma maquina de estados de leitura
    //mudamos que estado sempre que recebemos uma flag diferente
 
@@ -159,13 +159,18 @@ int main(int argc, char** argv)
    printf("Receive:\n");
 
    if((res = read(fd,bufr,5)) < 0) perror("Erro de leitura");
+   
    for(i = 0; i < 5; i++) printf("%02x\n", bufr[i]);
+   
 
    unsigned char XOR = 0x01 ^ 0x08;
-
-  while((STOP == FALSE) && (i <= 4)){
+   
+    i=0;
+  while(STOP == FALSE && i <= 4){
+    
 
     if(STATE == 0) {
+    
         STATE++;
         i = 0;
     }
@@ -173,6 +178,7 @@ int main(int argc, char** argv)
     switch (STATE)
     {
     case 1:
+        
         if(bufr[i] == 0x5c){
             STATE = 2;
             i++;
@@ -180,6 +186,7 @@ int main(int argc, char** argv)
         else STATE = 1;
         break;
     case 2:
+       
         if(bufr[i] == 0x01){
             STATE = 3;
             i++;
@@ -189,6 +196,7 @@ int main(int argc, char** argv)
         else STATE = 1;
         break;
     case 3:
+        
 
         if(bufr[i] == 0x08){
             STATE = 4;
@@ -198,7 +206,7 @@ int main(int argc, char** argv)
         else STATE = 1;
         break;
     case 4:
-
+       
         if(bufr[i] == XOR){; 
 
             STATE = 5;
@@ -209,6 +217,7 @@ int main(int argc, char** argv)
         else STATE = 1;
         break;
     case 5:
+        
 
         if(bufr[i] == 0x5c){
             STATE = 6;
