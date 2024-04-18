@@ -159,11 +159,11 @@ int main(int argc, char** argv)
    printf("Receive:\n");
 
    if((res = read(fd,bufr,5)) < 0) perror("Erro de leitura");
-   for(i = 0; i < 5; i++) printf(": %02x\n", bufr[i]);
+   for(i = 0; i < 5; i++) printf("%02x\n", bufr[i]);
 
    unsigned char XOR = 0x01 ^ 0x08;
 
-  while(STOP == FALSE){
+  while((STOP == FALSE) && (i <= 4)){
 
     if(STATE == 0) {
         STATE++;
@@ -177,14 +177,16 @@ int main(int argc, char** argv)
             STATE = 2;
             i++;
         }
-        else STATE = 0;
+        else STATE = 1;
         break;
     case 2:
         if(bufr[i] == 0x01){
             STATE = 3;
             i++;
         }
-        else STATE = 0;
+        else if(bufr[i] == 0x5c) STATE = 2;
+        
+        else STATE = 1;
         break;
     case 3:
 
@@ -192,7 +194,8 @@ int main(int argc, char** argv)
             STATE = 4;
             i++;
         }
-        else STATE = 0;
+        else if(bufr[i] == 0x5c) STATE = 2;
+        else STATE = 1;
         break;
     case 4:
 
@@ -201,27 +204,27 @@ int main(int argc, char** argv)
             STATE = 5;
             i++;
         }
-        else printf("Erro na comparação");
+        else if(bufr[i] == 0x5c) STATE = 2;
+        //else printf("Erro ");
+        else STATE = 1;
         break;
     case 5:
 
         if(bufr[i] == 0x5c){
             STATE = 6;
         }
-        else STATE = 0;
+        else STATE = 1;
         break;
     
     default:
 
         STOP = TRUE;
-        printf("%d", STOP);
         
         break;
     }
 }
     if (STOP == TRUE){
-        lseek(fd,0,SEEK_SET);
-        printf("%d", STOP);
+        
         res = write(fd, bufw, 5);
     }
     else perror("UA não enviado");
