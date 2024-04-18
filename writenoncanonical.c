@@ -96,7 +96,6 @@ int main(int argc, char** argv)
        printf("%02x \n", (unsigned char)bufw[i]);
    }
 
-   lseek(fd, 0, SEEK_SET);
    printf("Receive: \n");
    
    if(read(fd,bufr,5) < 0){
