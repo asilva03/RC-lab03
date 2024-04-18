@@ -191,7 +191,10 @@ int main(int argc, char** argv)
             STATE = 3;
             i++;
         }
-        else if(bufr[i] == 0x5c) STATE = 2;
+        else if(bufr[i] == 0x5c){
+         i++;
+         STATE = 2;
+         }
         
         else STATE = 1;
         break;
@@ -202,7 +205,10 @@ int main(int argc, char** argv)
             STATE = 4;
             i++;
         }
-        else if(bufr[i] == 0x5c) STATE = 2;
+        else if(bufr[i] == 0x5c){
+         STATE = 2;
+         i++;
+         }
         else STATE = 1;
         break;
     case 4:
@@ -212,7 +218,10 @@ int main(int argc, char** argv)
             STATE = 5;
             i++;
         }
-        else if(bufr[i] == 0x5c) STATE = 2;
+        else if(bufr[i] == 0x5c){
+        STATE = 2;
+        i++;
+        }
         //else printf("Erro ");
         else STATE = 1;
         break;
