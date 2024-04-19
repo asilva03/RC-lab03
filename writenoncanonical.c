@@ -111,75 +111,68 @@ int main(int argc, char** argv)
 
     i=0;
     while((STOP == FALSE) && (i <= 4)){
-    perror("while");
-
-    if(STATE == 0) {
-        STATE++;
-        i = 0;
-    }
-
-    switch (STATE)
-    {
-    case 1:
-        perror("1");
-        i++;
-        if(bufr[i] == 0x5c){
-            STATE = 2; 
-        }
-        else STATE = 1;
-        break;
-    case 2:
-        perror("2");
-        i++;
-        if(bufr[i] == 0x03){
-            STATE = 3;   
-        }
-        else if(bufr[i] == 0x5c){
-            STATE = 2;
-        }
-        
-        else STATE = 1;
-        break;
-    case 3:
-        perror("3");
-        i++;
-        if(bufr[i] == 0x06){
-            STATE = 4;   
-        }
-        else if(bufr[i] == 0x5c){
-            STATE = 2;
-        }
-        else STATE = 1;
-        break;
-    case 4:
-        perror("4");
-        i++;
-        if(bufr[i] == XOR){; 
-            STATE = 5; 
-        }
-        else if(bufr[i] == 0x5c){
-            STATE = 2;
-        }
-        //else printf("Erro ");
-        else STATE = 1;
-        break;
-    case 5:
-        perror("5");
-        if(bufr[i] == 0x5c){
-            STATE = 6;
-        }
-        else STATE = 1;
-        break;
-    
-    default:
-        perror("default");
-        STOP = TRUE;
-        
-        break;
-    }
-}
+       if(STATE == 0) {
+           STATE++;
+           i = 0;
+       }
+   
+       switch (STATE)
+       {
+       case 1:
+           i++;
+           if(bufr[i] == 0x5c){
+               STATE = 2; 
+           }
+           else STATE = 1;
+           break;
+          
+       case 2:
+           i++;
+           if(bufr[i] == 0x03){
+               STATE = 3;   
+           }
+           else if(bufr[i] == 0x5c){
+               STATE = 2;
+           }    
+           else STATE = 1;
+           break;
+          
+       case 3:
+           i++;
+           if(bufr[i] == 0x06){
+               STATE = 4;   
+           }
+           else if(bufr[i] == 0x5c){
+               STATE = 2;
+           }
+           else STATE = 1;
+           break;
+          
+       case 4:
+           i++;
+           if(bufr[i] == XOR){; 
+               STATE = 5; 
+           }
+           else if(bufr[i] == 0x5c){
+               STATE = 2;
+           }
+           else STATE = 1;
+           break;
+          
+       case 5:
+           if(bufr[i] == 0x5c){
+               STATE = 6;
+           }
+           else STATE = 1;
+           break;
+       
+       default:
+           perror("default");
+           STOP = TRUE; 
+           break;
+       }
+   }
     if (STOP == TRUE){
-        
         printf("UA bem recebido!\n");
     }
     else printf("UA mal!\n");
@@ -188,13 +181,11 @@ int main(int argc, char** argv)
    O ciclo FOR e as instruções seguintes devem ser alterados de modo a respeitar
    o indicado no guião
    */
-
-
+   
    if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
        perror("tcsetattr");
        exit(-1);
    }
-
 
    close(fd);
    return 0;
