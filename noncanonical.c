@@ -165,12 +165,9 @@ int main(int argc, char** argv)
 
    unsigned char XOR = 0x01 ^ 0x08;
    
-    i=0;
+  i=0;
   while(STOP == FALSE && i <= 4){
-    
-
     if(STATE == 0) {
-    
         STATE++;
         i = 0;
     }
@@ -178,56 +175,49 @@ int main(int argc, char** argv)
     switch (STATE)
     {
     case 1:
-        
+        i++;
         if(bufr[i] == 0x5c){
             STATE = 2;
-            i++;
         }
         else STATE = 1;
         break;
+     
     case 2:
-       
+        i++;       
         if(bufr[i] == 0x01){
             STATE = 3;
-            i++;
         }
         else if(bufr[i] == 0x5c){
-         i++;
          STATE = 2;
          }
         
         else STATE = 1;
         break;
-    case 3:
-        
-
+     
+    case 3: 
+        i++;
         if(bufr[i] == 0x08){
             STATE = 4;
-            i++;
         }
         else if(bufr[i] == 0x5c){
          STATE = 2;
-         i++;
          }
         else STATE = 1;
         break;
+     
     case 4:
-       
+        i++;
         if(bufr[i] == XOR){; 
-
             STATE = 5;
-            i++;
         }
         else if(bufr[i] == 0x5c){
-        STATE = 2;
-        i++;
+            STATE = 2;
         }
         //else printf("Erro ");
         else STATE = 1;
         break;
+     
     case 5:
-        
-
         if(bufr[i] == 0x5c){
             STATE = 6;
         }
@@ -235,20 +225,19 @@ int main(int argc, char** argv)
         break;
     
     default:
-
-        STOP = TRUE;
-        
+        STOP = TRUE;        
         break;
     }
 }
+ 
     if (STOP == TRUE){
-        
         res = write(fd, bufw, 5);
     }
     else perror("UA não enviado");
 
    /*o terminal volta as configurações originais devido ao facto de certas aplicações 
      não definem as proprias configurações de terminal, por isso é importante voltar as definições originais*/
+ 
    if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
        perror("tcsetattr");
        exit(-1);
