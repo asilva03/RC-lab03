@@ -55,8 +55,8 @@ int main(int argc, char** argv)
    /* set input mode (non-canonical, no echo,...) */
    newtio.c_lflag = 0;
 
-   newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
-   newtio.c_cc[VMIN]     = 3;   /* blocking read until 5 chars received */
+   newtio.c_cc[VTIME]    = 50;   /* inter-character timer unused */
+   newtio.c_cc[VMIN]     = 5;   /* blocking read until 5 chars received */
 
 
 
@@ -83,8 +83,8 @@ int main(int argc, char** argv)
 */
 
    bufw[0] = 0x5c;
-   bufw[1] = 0x01;
-   bufw[2] = 0x08;
+   bufw[1] = 0x01;//01
+   bufw[2] = 0x08;//08
    bufw[3] = bufw[1]^bufw[2];
    bufw[4] = 0x5c;       
 
@@ -108,70 +108,65 @@ int main(int argc, char** argv)
    }
 
     unsigned char XOR=0x03^0x06;
+      i = 0;
+  while(STOP == FALSE && i <= 4){
+    if(STATE == 0){
+        printf("STATE: %d\n", STATE);
+         STATE++;
+         
+    }
 
-    i=0;
-    while((STOP == FALSE) && (i <= 4)){
-       if(STATE == 0) {
-           STATE++;
-           i = 0;
-       }
-   
-       switch (STATE)
-       {
-       case 1:
-           i++;
-           if(bufr[i] == 0x5c){
-               STATE = 2; 
-           }
-           else STATE = 1;
-           break;
-          
-       case 2:
-           i++;
-           if(bufr[i] == 0x03){
-               STATE = 3;   
-           }
-           else if(bufr[i] == 0x5c){
-               STATE = 2;
-           }    
-           else STATE = 1;
-           break;
-          
-       case 3:
-           i++;
-           if(bufr[i] == 0x06){
-               STATE = 4;   
-           }
-           else if(bufr[i] == 0x5c){
-               STATE = 2;
-           }
-           else STATE = 1;
-           break;
-          
-       case 4:
-           i++;
-           if(bufr[i] == XOR){; 
-               STATE = 5; 
-           }
-           else if(bufr[i] == 0x5c){
-               STATE = 2;
-           }
-           else STATE = 1;
-           break;
-          
-       case 5:
-           if(bufr[i] == 0x5c){
-               STATE = 6;
-           }
-           else STATE = 1;
-           break;
-       
-       default:
-           perror("default");
-           STOP = TRUE; 
-           break;
-       }
-   }
+    switch (STATE)
+    {
+    case 1:
+        printf("STATE: %d\n", STATE);
+        while(bufr[i] == 0x5c) i++;
+        
+        if(bufr[i] == 0x03) STATE++;
+
+        else STATE = 0;
+        break;
+     
+    case 2:
+        printf("STATE: %d\n", STATE);
+        if(bufr[i] == 0x06) STATE = 3;
+
+        else if(bufr[i] == 0x5c){
+         STATE = 1;
+         }
+        else STATE = 0;
+        
+        break;
+     
+    case 3:
+        printf("STATE: %d\n", STATE);
+        if(bufr[i] == XOR){
+            STATE = 4;
+        }
+        else if(bufr[i] == 0x5c){
+         STATE = 1;
+         }
+        else STATE = 0;
+        break;
+     
+    case 4:
+        printf("STATE: %d\n", STATE);
+        if(bufr[i] == 0x5c){ 
+            STATE = 5;
+            STOP = TRUE;
+        }
+        else if(bufr[i] == 0x5c){
+            STATE = 1;
+        }
+        else STATE = 0;
+
+        break;
+    
+    default:        
+        break;
+    }
+    i++;
+}
     if (STOP == TRUE){
         printf("UA bem recebido!\n");
     }
