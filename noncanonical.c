@@ -164,76 +164,69 @@ int main(int argc, char** argv)
    
 
    unsigned char XOR = 0x01 ^ 0x08;
-   
-  i=0;
+    i = 0;
   while(STOP == FALSE && i <= 4){
-    if(STATE == 0) {
+    if(STATE == 0){ 
+        printf("STATE: %d\n", STATE);
         STATE++;
-        i = 0;
+        
     }
 
     switch (STATE)
     {
     case 1:
-        i++;
-        if(bufr[i] == 0x5c){
-            STATE = 2;
-        }
-        else STATE = 1;
+        printf("STATE: %d\n", STATE);
+        while(bufr[i] == 0x5c) i++;
+        
+        if(bufr[i] == 0x01) STATE++;
+        else STATE = 0;
         break;
      
     case 2:
-        i++;       
-        if(bufr[i] == 0x01){
-            STATE = 3;
-        }
+        printf("STATE: %d\n", STATE);
+        if(bufr[i] == 0x08) STATE = 3;
+
         else if(bufr[i] == 0x5c){
-         STATE = 2;
+         STATE = 1;
          }
-        
-        else STATE = 1;
+        else STATE = 0;
         break;
      
-    case 3: 
-        i++;
-        if(bufr[i] == 0x08){
+    case 3:
+        printf("STATE: %d\n", STATE);
+        if(bufr[i] == XOR){
             STATE = 4;
         }
         else if(bufr[i] == 0x5c){
-         STATE = 2;
+         STATE = 1;
          }
-        else STATE = 1;
+        else STATE = 0;
         break;
      
     case 4:
-        i++;
-        if(bufr[i] == XOR){; 
+        printf("STATE: %d\n", STATE);
+        if(bufr[i] == 0x5c){
             STATE = 5;
+            STOP = TRUE; 
         }
         else if(bufr[i] == 0x5c){
-            STATE = 2;
+            STATE = 1;
         }
-        //else printf("Erro ");
-        else STATE = 1;
-        break;
-     
-    case 5:
-        if(bufr[i] == 0x5c){
-            STATE = 6;
-        }
-        else STATE = 1;
+        else STATE = 0;
         break;
     
-    default:
-        STOP = TRUE;        
+    default:   
         break;
     }
+    i++;
 }
  
     if (STOP == TRUE){
         res = write(fd, bufw, 5);
     }
-    else perror("UA não enviado");
+    else {
+        perror("UA não enviado");
+    }
 
    /*o terminal volta as configurações originais devido ao facto de certas aplicações 
      não definem as proprias configurações de terminal, por isso é importante voltar as definições originais*/
