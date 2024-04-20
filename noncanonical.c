@@ -212,7 +212,7 @@ int main(int argc, char** argv)
         else if(bufr[i] == 0x5c){
             STATE = 1;
         }
-        else STATE = 0;
+        else STATE = 1;
         break;
     
     default:   
