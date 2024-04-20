@@ -34,7 +34,7 @@ int main(int argc, char** argv)
    */
    struct termios oldtio,newtio;
    unsigned char bufw[255], bufr[255];
-   int i, sum = 0, speed = 0, STATE=0;
+   int i=0, sum = 0, speed = 0, STATE=0;
    //temos que criar uma maquina de estados de leitura
    //mudamos que estado sempre que recebemos uma flag diferente
 
@@ -159,75 +159,78 @@ int main(int argc, char** argv)
    printf("Receive:\n");
 
    if((res = read(fd,bufr,5)) < 0) perror("Erro de leitura");
-   for(i = 0; i < 5; i++) printf(": %02x\n", bufr[i]);
+   
+   for(i = 0; i < 5; i++) printf("%02x\n", bufr[i]);
+   
 
    unsigned char XOR = 0x01 ^ 0x08;
-
-  while(STOP == FALSE){
-
-    if(STATE == 0) {
+    i = 0;
+  while(STOP == FALSE && i <= 4){
+    if(STATE == 0){ 
+        printf("STATE: %d\n", STATE);
         STATE++;
-        i = 0;
+        
     }
 
     switch (STATE)
     {
     case 1:
-        if(bufr[i] == 0x5c){
-            STATE = 2;
-            i++;
-        }
+        printf("STATE: %d\n", STATE);
+        while(bufr[i] == 0x5c) i++;
+        
+        if(bufr[i] == 0x01) STATE++;
         else STATE = 0;
         break;
+     
     case 2:
-        if(bufr[i] == 0x01){
-            STATE = 3;
-            i++;
-        }
+        printf("STATE: %d\n", STATE);
+        if(bufr[i] == 0x08) STATE = 3;
+
+        else if(bufr[i] == 0x5c){
+         STATE = 1;
+         }
         else STATE = 0;
         break;
+     
     case 3:
-
-        if(bufr[i] == 0x08){
+        printf("STATE: %d\n", STATE);
+        if(bufr[i] == XOR){
             STATE = 4;
-            i++;
         }
+        else if(bufr[i] == 0x5c){
+         STATE = 1;
+         }
         else STATE = 0;
         break;
+     
     case 4:
-
-        if(bufr[i] == XOR){; 
-
-            STATE = 5;
-            i++;
-        }
-        else printf("Erro na comparação");
-        break;
-    case 5:
-
+        printf("STATE: %d\n", STATE);
         if(bufr[i] == 0x5c){
-            STATE = 6;
+            STATE = 5;
+            STOP = TRUE; 
+        }
+        else if(bufr[i] == 0x5c){
+            STATE = 1;
         }
         else STATE = 0;
         break;
     
-    default:
-
-        STOP = TRUE;
-        printf("%d", STOP);
-        
+    default:   
         break;
     }
+    i++;
 }
+ 
     if (STOP == TRUE){
-        lseek(fd,0,SEEK_SET);
-        printf("%d", STOP);
         res = write(fd, bufw, 5);
     }
-    else perror("UA não enviado");
+    else {
+        perror("UA não enviado");
+    }
 
    /*o terminal volta as configurações originais devido ao facto de certas aplicações 
      não definem as proprias configurações de terminal, por isso é importante voltar as definições originais*/
+ 
    if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
        perror("tcsetattr");
        exit(-1);
