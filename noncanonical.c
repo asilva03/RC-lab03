@@ -1,79 +1,64 @@
-/*Non-Canonical Input Processing*/
+#ifndef LINKLAYER
+#define LINKLAYER
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <termios.h> // termios.h é uma biblioteca que fornece a estrutura necessária guardar 
-#include <stdio.h>  //todos os parâmentros das portas portas série (oldtio e newtio).
-#include <stdlib.h> //Também fornece as funções tcgetattr(), tcflush(), tcsetattr().
+#include <fcntl.h>
+#include <termios.h>
+#include <stdio.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
-#include <unistd.h>//Fornece o uso das funções read() e write()
-#include <fcntl.h>/* Fornece várias funções relacionadas ao controle de descritores de arquivos.
-open(), close(), fcntl e fcntl(fd, F_GETFL) e fcntl(fd, F_SETFL, flags) estão todas relacionadas
-ao controle de descritores de arquivo, mas cada uma executa uma tarefa diferente. Trabam com flags 
-de status do descritor de arquivo(variável inteira associada ao arquivo).
-*/
-//noncanonical.c escreve na porta 0
-/*Portanto, o programa noncanonical.c lida com a entrada e saída de dados da porta serial de forma "não convencional"
- ou "não canônica", ou seja, sem a interpretação especial de caracteres de controle. Isso pode ser útil em situações
-  em que você precisa lidar com dados binários ou em que deseja ter mais controle sobre como os dados são tratados,
-sem depender de convenções específicas de formatação de texto.*/
 
-#define BAUDRATE B38400 // Número de simbolos(bits) transmitidos por segundo, ou seja 38400 b/s.
-#define MODEMDEVICE "/dev/ttyS1"
+typedef struct linkLayer{
+    char serialPort[50];
+    int role; //defines the role of the program: 0==Transmitter, 1=Receiver
+    int baudRate;
+    int numTries;
+    int timeOut;
+} linkLayer;
+
+//ROLE
+#define NOT_DEFINED -1
+#define TRANSMITTER 0
+#define RECEIVER 1
+
+
+//SIZE of maximum acceptable payload; maximum number of bytes that application layer should send to link layer
+#define MAX_PAYLOAD_SIZE 1000
+
+//CONNECTION deafault values
+#define BAUDRATE_DEFAULT B38400
+#define MAX_RETRANSMISSIONS_DEFAULT 3
+#define TIMEOUT_DEFAULT 4
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
+
+//MISC
 #define FALSE 0
 #define TRUE 1
 
-volatile int STOP=FALSE;
-
-int main(int argc, char** argv)
-{
-   int fd,c, res;
-   /*file descriptor(fd).O parâmetro fd na função tcflush representa o 
-   descritor de arquivo associado ao terminal que se deseja manipular.
-   */
+int fd,c, res;
+  
    struct termios oldtio,newtio;
    unsigned char bufw[255], bufr[255];
+   unsigned char buf;
    int i=0, sum = 0, speed = 0, STATE=0;
-   //temos que criar uma maquina de estados de leitura
-   //mudamos que estado sempre que recebemos uma flag diferente
+
+// Opens a connection using the "port" parameters defined in struct linkLayer, returns "-1" on error and "1" on sucess
+int llopen(linkLayer connectionParameters);
+// Sends data in buf with size bufSize
+int llwrite(unsigned char* buf, int bufSize);
+// Receive data in packet
+int llread(unsigned char* packet);
+// Closes previously opened connection; if showStatistics==TRUE, link layer should print statistics in the console on close
+int llclose(linkLayer connectionParameters, int showStatistics);
 
 
-   /* recebe a segunda string dada pelo terminal(strings escritas por nós pelo terminal 
-   que são separadas por ' ').
-   */
-   if ( (argc < 2) ||
-        ((strcmp("/dev/ttyS0", argv[1])!=0) &&
-         (strcmp("/dev/ttyS1", argv[1])!=0) )) {
-       printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
-       exit(1);
-   }
-   /*
-   /dev/ttyS0 é um caminho de dispositivo no sistema de arquivos do Linux que 
-   representa uma porta serial de hardware.
-   
-   dev: Este é o diretório no sistema de arquivos do Linux onde estão 
-   localizados os arquivos de dispositivos.
-   
-   ttyS0: Este é o nome do dispositivo serial. 
-   No Linux, os dispositivos seriais são nomeados como ttyS0, ttyS1, ttyS2, e assim por diante. 
-   O número após o ttyS indica a porta serial específica.
-   Por exemplo, /dev/ttyS0 representa a primeira porta serial no sistema.
 
-   Open serial port device for reading and writing and not as controlling tty
-   because we don't want to get killed if linenoise sends CTRL-C.
-   */
-   
-   //O_RDWR indica que o arquivo será aberto para leitura e escrita.
-   /*O_NOCTTY indica que o file descriptor (dev), associoado a porta serial ttyS0, por exemplo
-    não será o terminal de controlo deste processo, ou seja, impede que ocorra interferências por parte
-    do uso do terminal associado a este programa
-    na ligação com outro file descriptor (dev), associado a uma porta serial ttyS1, por exemplo 
-    */
-
-   //define fd como int associado a argv
-   fd = open(argv[1], O_RDWR | O_NOCTTY ); //O |,  é uma fomra dos SO linux e Unix, de
-   if (fd < 0) { perror(argv[1]); exit(-1); }//adicionar funções a função
+int llopen(linkLayer connectionParameters){
+ fd = open(argv[1], O_RDWR | O_NOCTTY ); 
+   if (fd < 0) { perror(argv[1]); exit(-1); }
 
    //guarda os parametros associados a fd em oldtio
    if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
@@ -81,21 +66,11 @@ int main(int argc, char** argv)
        exit(-1);
    }
   
-   //Inicializa o struct a zero e preenche 3 flags
+   
    bzero(&newtio, sizeof(newtio));
-   newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD; //operador | (OR bit a bit)
+   newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;)
    newtio.c_iflag = IGNPAR;
-   newtio.c_oflag = 0; //desativa todos os flags de controle de saída da estrutura, útil quando não há necessidade de controle especial sobre a saída dos dados 
-   /*
-    BAUDRATE: Define a taxa de transmissão (baud rate) da comunicação serial.
-    CS8: Configura o tamanho dos caracteres para 8 bits por byte.
-    CLOCAL: Indica que a linha não é usada por um modem externo (ou seja, a conexão é local).
-    CREAD: Ativa a recepção de caracteres.
-    IGNPAR: Esta constante indica que os bytes de entrada com erros de paridade devem ser ignorado, sou seja, 
-    o sistema operacional não reportará esses erros e os bytes serão tratados como se não contivessem erros.
-   */
-
-   /* set input mode (non-canonical, no echo,...) */
+   newtio.c_oflag = 0; 
    newtio.c_lflag = 0;
     /*
     A configuração newtio.c_lflag = 0; desativa todos os modos de operação local do terminal.
@@ -106,7 +81,7 @@ int main(int argc, char** argv)
     Isso é útil em situações em que se deseja um controle total sobre o processamento da entrada e saída do terminal.
     */
    newtio.c_cc[VTIME]    = 50;   /* inter-character timer unused. Da 1s de timeout */ 
-   newtio.c_cc[VMIN]     = 5;   /* blocking read until 5 chars received */
+   newtio.c_cc[VMIN]     = 1;   /* blocking read until 5 chars received */
    
 /*    newtio.c_lflag = 0;:
        c_lflag é um membro da estrutura termios que controla os modos de operação local do terminal.
@@ -158,7 +133,7 @@ int main(int argc, char** argv)
    
    printf("Receive:\n");
 
-   if((res = read(fd,bufr,5)) < 0) perror("Erro de leitura");
+   if((res = read(fd,bufr,1)) < 0) perror("Erro de leitura");
    
    for(i = 0; i < 5; i++) printf("%02x\n", bufr[i]);
    
@@ -166,6 +141,8 @@ int main(int argc, char** argv)
    unsigned char XOR = 0x01 ^ 0x08;
     i = 0;
   while(STOP == FALSE && i <= 4){
+  res = read(fd,bufr,1);
+  
     if(STATE == 0){ 
         printf("STATE: %d\n", STATE);
         STATE++;
@@ -202,17 +179,18 @@ int main(int argc, char** argv)
          }
         else STATE = 0;
         break;
+    
      
     case 4:
         printf("STATE: %d\n", STATE);
         if(bufr[i] == 0x5c){
-            STATE = 5;
+            STATE = 6;
             STOP = TRUE; 
         }
         else if(bufr[i] == 0x5c){
             STATE = 1;
         }
-        else STATE = 1;
+        else STATE = 0;
         break;
     
     default:   
@@ -231,11 +209,65 @@ int main(int argc, char** argv)
    /*o terminal volta as configurações originais devido ao facto de certas aplicações 
      não definem as proprias configurações de terminal, por isso é importante voltar as definições originais*/
  
-   if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
-       perror("tcsetattr");
-       exit(-1);
-   }
 
-   close(fd);
-  return 0;
-}   
+}
+ llwrite(unsigned char* buf, int bufSize);
+ 
+ int llread(unsigned char* packet){
+ unsigned char frase[20];
+    
+    while(STOP == FALSE){
+    if(STATE == 0){ 
+        printf("STATE: %d\n", STATE);
+        STATE++;
+        
+    }
+
+    switch (STATE)
+    {
+    case 1:
+        printf("STATE: %d\n", STATE);
+        while(packet[i] == 0x5c) i++;
+        
+        if(packet[i] == 0x01) STATE++;
+        else STATE = 0;
+        break;
+     
+    case 2:
+        printf("STATE: %d\n", STATE);
+        if(packet[i] == 0x08) STATE = 3;
+
+        else if(packet[i] == 0x5c){
+         STATE = 1;
+         }
+        else STATE = 0;
+        break;
+     
+    case 3:
+        printf("STATE: %d\n", STATE);
+        if(packet[i] == XOR){
+            STATE = 4;
+        }
+        else if(packet[i] == 0x5c){
+         STATE = 1;
+         }
+        else STATE = 0;
+        break;
+    
+     
+    case 4:
+        printf("STATE: %d\n", STATE);
+        while(packet[i] != 0x5c){
+        packet[i] = frase[j];
+            j++; 
+            i++;
+        }
+        break;
+    
+    default:   
+        break;
+    }
+    i++;
+}
+
+#endif
