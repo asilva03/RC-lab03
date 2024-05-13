@@ -53,6 +53,7 @@ int llread(unsigned char *packet);
 // Closes previously opened connection; if showStatistics==TRUE, link layer should print statistics in the console on close
 int llclose(linkLayer connectionParameters, int showStatistics);
 
+//COMEÇA LLOPEN
 int llopen(linkLayer connectionParameters)
 {
     fd = open(connectionParameters.serialPort, O_RDWR | O_NOCTTY);
@@ -79,41 +80,10 @@ int llopen(linkLayer connectionParameters)
     newtio.c_iflag = IGNPAR;
     newtio.c_oflag = 0;
     newtio.c_lflag = 0;
-    /*
-    A configuração newtio.c_lflag = 0; desativa todos os modos de operação local do terminal.
-    isso inclui modos como ICANON (modo canônico) e ECHO (eco dos caracteres digitados).
-    Quando esses modos estão desativados, o terminal opera em modo não canônico, o que significa que a entrada é processada
-    imediatamente, caractere por caractere, sem esperar por uma nova linha ou qualquer outra interação do usuário.
-    Além disso, nenhum eco dos caracteres digitados é feito.
-    Isso é útil em situações em que se deseja um controle total sobre o processamento da entrada e saída do terminal.
-    */
+   
     newtio.c_cc[VTIME] = 0; /*  inter-character timer unused. Da 1s de timeout */
     newtio.c_cc[VMIN] = 1;  /* blocking read until 5 chars received */
-
-    /*    newtio.c_lflag = 0;:
-           c_lflag é um membro da estrutura termios que controla os modos de operação local do terminal.
-           A configuração newtio.c_lflag = 0; desativa todos os modos de operação local do terminal.
-           Isso inclui modos como ICANON (modo canônico) e ECHO (eco dos caracteres digitados).
-
-       newtio.c_cc[VTIME] = 0;:
-           c_cc é um array que armazena os caracteres especiais do terminal, como controle de fluxo, caractere de final de linha, entre outros.
-           VTIME é uma constante que representa o índice do caractere de temporização de leitura.
-       newtio.c_cc[VTIME] = 0; define o temporizador de caractere como zero,
-           o que significa que não há temporização entre caracteres. Isso indica que a função read()
-           retornará imediatamente após ler o número mínimo de caracteres especificado pela configuração VMIN.
-
-       newtio.c_cc[VMIN] = 5;:
-           VMIN é uma constante que representa o índice do número mínimo de caracteres
-           para satisfazer uma chamada de leitura.
-       ewtio.c_cc[VMIN] = 5; configura o número mínimo de caracteres para 5.
-           Isso significa que a função read() bloqueará até que pelo menos 5 caracteres sejam recebidos antes de retornar.
-    */
-
-    /*
-    VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
-    leitura do(s) próximo(s) caracter(es)
-    */
-
+    
     // limpa o buffer após escrever tudo
     tcflush(fd, TCIOFLUSH);
 
@@ -313,10 +283,15 @@ int llopen(linkLayer connectionParameters)
       não definem as proprias configurações de terminal, por isso é importante voltar as definições originais*/
     return 1;
 
-} /*while(sum <= bufSize){//sum serve para contar os bytes enviados para o recetor quando chegar ao MAX_PAYLOAD_SIZE, para
+} 
+//TERMINA LLOPEN
+
+/*while(sum <= bufSize){//sum serve para contar os bytes enviados para o recetor quando chegar ao MAX_PAYLOAD_SIZE, para
      unsigned char frase[] = "Helicopter Helicopter";/*temos que modular o tamanho de envio dos dados? Então eu tenho que criar um
      vetor auxiliar que envie os dados apartir do endereço recebido?*/
 // bufSsize é o número de bytes total a ser enviados  e recebidos pela função llread*/
+
+//COMEÇA LLWRITE
 int llwrite(unsigned char *buf, int bufSize)
 {
     int i = 0, j = 0; // i representa a posição do array aux_buf antes de calcular BCC2, j representa a posição de aux_buf para BCC2 e 0x5c
@@ -394,8 +369,12 @@ int llwrite(unsigned char *buf, int bufSize)
     }
     return i;
 }
+//TERMINA LLWRITE
+
 /*llread depois de feito o handshake, vai ficar a espera de receber os dados, o que quer dizer ao mesmo tempo que se está enviar um byte
 , estará-se a receber o mesmo no outro lado, sistema FIFO. O envio pode ser mais rapida do que a receção, não origina erros?*/
+
+//COMEÇA LLREAD
 int llread(unsigned char *packet)
 {
     //Usa-se alocação dinâmica porque não se sabe o tamanho do packet que vai chegar
@@ -621,4 +600,6 @@ int llread(unsigned char *packet)
     }
     return 1;
 }
+//TERMINA LLREAD
+
 #endif
