@@ -336,14 +336,30 @@ int llwrite(unsigned char *buf, int bufSize)
             printf("Antes de enviar\n");
             printf("O valor atual de BCC2:%02x\n", BCC2);
             while (j < (bufSize - 2) && (j < (tam_dados + 2))){
-                /* Para tam_dados = 22, 22 + 4 -1 = 25,este valor corresponde á posição do array aux_buf que contém o ultimo byte de dados
-                   , o que equivale a tam_dados + 3 = 25, mas como se utiliza aux_buf[j + 1],fica tam_dados + 2 = 24, e como já se faz a
-                   primeira operação de XOR, é preciso decrementar ainda mais um, o que equivale a passar de j <= (tam_dados + 2)
-                   para j < (tam_dados + 2)*/ 
+                /* 
+                Para tam_dados = 22, 22 + 4 -1 = 25,este valor corresponde á posição do array aux_buf que contém o ultimo byte de dados
+                , o que equivale a tam_dados + 3 = 25, mas como se utiliza aux_buf[j + 1],fica tam_dados + 2 = 24, e como já se faz a
+                primeira operação de XOR, é preciso decrementar ainda mais um, o que equivale a passar de j <= (tam_dados + 2)
+                para j < (tam_dados + 2)
+                */ 
+
                 printf("%c\n",aux_buf[j + 1]);
-                    BCC2 = BCC2 ^ aux_buf[j + 1];
-                    printf("O valor atual de BCC2:%02x\n", BCC2); // -3 porque, para um bufSize = 10 como exemplo, 10-3 = 7, 7+1 que corresponde
-                j++;                              // a aux_buf[j + 1] ou seja é a posição 8 que é a posição onde BCC2 será guardado. A ultima posição do vetor seria 9.
+                BCC2 = BCC2 ^ aux_buf[j + 1];
+                printf("O valor atual de BCC2:%02x\n", BCC2);   // -3 porque, para um bufSize = 10 como exemplo, 10-3 = 7, 7+1 que corresponde
+                j++;                                            // a aux_buf[j + 1] ou seja é a posição 8 que é a posição onde BCC2 será guardado. A ultima posição do vetor seria 9.
+            
+/*
+                if(aux_buf[j] == 0x5c){
+                    write(fd, 0x5d, 1);
+                    write(fd, 0x7c, 1);
+                }
+!!!!!!!!!!!!!
+                if(aux_buf[j] == 0x5d){
+                    write(fd, 0x5d, 1);
+                    write(fd, 0x7d, 1);
+                }  
+*/                
+
             }
             printf("Valor do BCC2:%02x\n", BCC2);
             aux_buf[j] = BCC2;
