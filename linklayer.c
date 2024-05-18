@@ -338,6 +338,12 @@ int llwrite(unsigned char *buf, int bufSize)
                 return -1;
             }
         }
+
+        //STOP & WAIT PROTOCOL
+        /*
+        while(read(fd, wait, 1) != ACK){}
+!!!!!!!!
+        */
         i++;
     }
     return i;
@@ -585,6 +591,14 @@ int llread(unsigned char *packet)
         default:
             break;
         }
+
+        //STOP & WAIT PROTOCOL
+        /*
+        write(fd, ACK, 1);
+!!!!!!!!
+        */
+
+
     }
     return cont;
 }
