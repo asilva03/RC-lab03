@@ -604,3 +604,291 @@ int llread(unsigned char *packet)
 }
 //TERMINA LLREAD
 
+
+//COMECA O LLCLOSE
+int llclose(linkLayer connectionParameters, int showStatistics){
+
+    !!!
+    /*
+    fd = open(connectionParameters.serialPort, O_RDWR | O_NOCTTY);
+    if (fd < 0)
+    {
+        perror(connectionParameters.serialPort);
+        exit(-1);
+    }
+
+    // guarda os parametros associados a fd em oldtio
+    if (tcgetattr(fd, &oldtio) == -1)
+    { // save current port settings 
+        perror("tcgetattr");
+        exit(-1);
+    }
+    if (connectionParameters.baudRate != BAUDRATE_DEFAULT)
+    {
+        perror("BAUDRATE not fixed");
+        exit(-1);
+    }
+
+    bzero(&newtio, sizeof(newtio));
+    newtio.c_cflag = BAUDRATE_DEFAULT | CS8 | CLOCAL | CREAD;
+    newtio.c_iflag = IGNPAR;
+    newtio.c_oflag = 0;
+    newtio.c_lflag = 0;
+   */
+
+    newtio.c_cc[VTIME] = 0; /*  inter-character timer unused. Da 1s de timeout */
+    newtio.c_cc[VMIN] = 1;  /* blocking read until 5 chars received */
+    
+    // limpa o buffer após escrever tudo
+    tcflush(fd, TCIOFLUSH);
+
+    // define os parametros associados
+    if (tcsetattr(fd, TCSANOW, &newtio) == -1)
+    {
+        perror("tcsetattr");
+        exit(-1);
+    }
+    
+
+    /*Apartir deste momento, o terminal está corretamente configurado para manipulação dos dados
+     com as configurações da estrutura newtio*/
+    printf("New termios structure set\n");
+    role = connectionParameters.role;
+    unsigned char buffer;
+    int STOP = FALSE, STATE = 0, i = 0, j=0;
+
+    if (role == TRANSMITTER && j=0)
+    { // Só para o noncanonical no final porque refere-se ao envio do AK
+        i = 0;
+        while (i <= 4)
+        {
+
+            if (i == 0)
+                buffer = 0x5c;
+            if (i == 1)
+                buffer = 0x01;
+            if (i == 2)
+                buffer = 0x0A;
+            if (i == 3)
+                buffer = 0x01 ^ 0x0A;
+            if (i == 4)
+                buffer = 0x5c;
+            printf("%02x\n", buffer);
+
+            if (res = write(fd, &buffer, 1) < 0)
+            {
+                perror("Erro no envio do DISC");
+                return -1;
+            }
+            buffer++;
+
+            i++;
+        }
+        printf("DISC enviado com sucesso\n");
+    }
+
+    i = 0;
+    unsigned char XOR;
+    while (i <= 4)
+    {
+
+        res = read(fd, &buffer, 1); // Aqui, os programas encontra-se no estado 0 da máquina de estados a espera de receber alguma coisa do outro programa
+        printf("%d \n", res);
+        if (res < 0)
+        {
+            perror("Erro de leitura");
+            return -1;
+        }
+        printf("%02x\n", buffer);
+
+        if (STATE == 0)
+        {
+            printf("STATE: %d\n", STATE);
+            STATE++;
+        }
+
+        switch (STATE)
+        {
+        case 1:
+            printf("STATE: %d\n", STATE);
+            if (buffer == 0x5c)
+                break; // loop de flags 0x5c
+
+            if (role == TRANSMITTER )
+            {
+                if (buffer == 0x03)
+                    STATE++;
+                else
+                    STATE = 0;
+            }
+
+            if (role == RECEIVER)
+            {
+                if (buffer == 0x01)
+                    STATE++;
+                else
+                    STATE = 0;
+            }
+            break;
+
+        case 2:
+            printf("STATE: %d\n", STATE);
+            if (role == TRANSMITTER)
+            {
+                if (buffer == 0x0A)
+                {
+                    STATE = 3;
+                    break;
+                }
+            }
+
+            if (role == RECEIVER && j=0)
+            {
+                if (buffer == 0x0A)
+                {
+                    STATE = 3;
+                    break;
+                }
+            }
+
+            if (role == RECEIVER && j=1)
+            {
+                if (buffer == 0x06)
+                {
+                    STATE = 3;
+                    break;
+                }
+            }
+
+            if (buffer == 0x5c)
+                STATE = 1;
+            else
+                STATE = 0;
+            break;
+
+        case 3:
+            printf("STATE: %d\n", STATE);
+            if (role == TRANSMITTER)
+            {
+                XOR = 0x03 ^ 0x0A;
+                if (buffer == XOR)
+                {
+                    STATE = 4;
+                    break;
+                }
+            }
+
+            if (role == RECEIVER && j=0)
+            {
+                XOR = 0x01 ^ 0x0A;
+                if (buffer == XOR)
+                {
+                    STATE = 4;
+                    break;
+                }
+            }
+
+            if (role == RECEIVER && j=1)
+            {
+                XOR = 0x01 ^ 0x06;
+                if (buffer == XOR)
+                {
+                    STATE = 4;
+                    break;
+                }
+            }
+
+            if (buffer == 0x5c)
+                STATE = 1;
+            else
+                STATE = 0;
+            break;
+
+        case 4:
+            printf("STATE: %d\n", STATE);
+
+            if (buffer == 0x5c)
+                STOP = TRUE;
+            else
+                STATE = 0;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    if (STOP == TRUE && role == RECEIVER)
+    { // Só para o noncanonical no final porque refere-se ao envio do UA
+        i = 0;
+        while (i <= 4)
+        {
+
+            if (i == 0)
+                buffer = 0x5c;
+            if (i == 1)
+                buffer = 0x03;
+            if (i == 2)
+                buffer = 0x0A;
+            if (i == 3)
+                buffer = 0x03 ^ 0x0A;
+            if (i == 4)
+                buffer = 0x5c;
+            printf("%02x\n", buffer);
+
+            if (res = write(fd, &buffer, 1) < 0)
+            {
+                perror("Erro no envio do DISC");
+                return -1;
+            }
+            i++;
+        }
+        j=1;
+        printf("DISC enviado com sucesso\n");
+    }
+    else if (role == RECEIVER)
+    {
+        printf("DISC não enviado\n");
+    }
+    if (STOP == TRUE && role == TRANSMITTER)
+        printf("DISC recebido com sucesso\n");
+    else if (role == TRANSMITTER)
+        printf("DISC não recebido\n");
+
+    /*o terminal volta as configurações originais devido ao facto de certas aplicações
+    não definem as proprias configurações de terminal, por isso é importante voltar as definições originais*/
+
+    if (role == TRANSMITTER && j=1)
+    { // Só para o noncanonical no final porque refere-se ao envio do AK
+        i = 0;
+        while (i <= 4)
+        {
+
+            if (i == 0)
+                buffer = 0x5c;
+            if (i == 1)
+                buffer = 0x01;
+            if (i == 2)
+                buffer = 0x06;
+            if (i == 3)
+                buffer = 0x01 ^ 0x06;
+            if (i == 4)
+                buffer = 0x5c;
+            printf("%02x\n", buffer);
+
+            if (res = write(fd, &buffer, 1) < 0)
+            {
+                perror("Erro no envio do SET");
+                return -1;
+            }
+            buffer++;
+
+            i++;
+        }
+        printf("SET enviado com sucesso\n");
+    }
+
+    return 1;
+
+} 
