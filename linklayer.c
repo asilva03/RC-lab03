@@ -606,42 +606,8 @@ int llread(unsigned char *packet)
 
 
 //COMECA O LLCLOSE
-int llclose(linkLayer connectionParameters, int showStatistics){
-
-    !!!
-    /*
-    fd = open(connectionParameters.serialPort, O_RDWR | O_NOCTTY);
-    if (fd < 0)
-    {
-        perror(connectionParameters.serialPort);
-        exit(-1);
-    }
-
-    // guarda os parametros associados a fd em oldtio
-    if (tcgetattr(fd, &oldtio) == -1)
-    { // save current port settings 
-        perror("tcgetattr");
-        exit(-1);
-    }
-    if (connectionParameters.baudRate != BAUDRATE_DEFAULT)
-    {
-        perror("BAUDRATE not fixed");
-        exit(-1);
-    }
-
-    bzero(&newtio, sizeof(newtio));
-    newtio.c_cflag = BAUDRATE_DEFAULT | CS8 | CLOCAL | CREAD;
-    newtio.c_iflag = IGNPAR;
-    newtio.c_oflag = 0;
-    newtio.c_lflag = 0;
-   */
-
-    newtio.c_cc[VTIME] = 0; /*  inter-character timer unused. Da 1s de timeout */
-    newtio.c_cc[VMIN] = 1;  /* blocking read until 5 chars received */
-    
-    // limpa o buffer após escrever tudo
-    tcflush(fd, TCIOFLUSH);
-
+int llclose(linkLayer connectionParameters, int showStatistics)
+{
     // define os parametros associados
     if (tcsetattr(fd, TCSANOW, &newtio) == -1)
     {
@@ -657,7 +623,7 @@ int llclose(linkLayer connectionParameters, int showStatistics){
     unsigned char buffer;
     int STOP = FALSE, STATE = 0, i = 0, j=0;
 
-    if (role == TRANSMITTER && j=0)
+    if (role == TRANSMITTER && j==0)
     { // Só para o noncanonical no final porque refere-se ao envio do AK
         i = 0;
         while (i <= 4)
@@ -742,7 +708,7 @@ int llclose(linkLayer connectionParameters, int showStatistics){
                 }
             }
 
-            if (role == RECEIVER && j=0)
+            if (role == RECEIVER && j==0)
             {
                 if (buffer == 0x0A)
                 {
@@ -751,7 +717,7 @@ int llclose(linkLayer connectionParameters, int showStatistics){
                 }
             }
 
-            if (role == RECEIVER && j=1)
+            if (role == RECEIVER && j==1)
             {
                 if (buffer == 0x06)
                 {
@@ -778,7 +744,7 @@ int llclose(linkLayer connectionParameters, int showStatistics){
                 }
             }
 
-            if (role == RECEIVER && j=0)
+            if (role == RECEIVER && j==0)
             {
                 XOR = 0x01 ^ 0x0A;
                 if (buffer == XOR)
@@ -788,7 +754,7 @@ int llclose(linkLayer connectionParameters, int showStatistics){
                 }
             }
 
-            if (role == RECEIVER && j=1)
+            if (role == RECEIVER && j==1)
             {
                 XOR = 0x01 ^ 0x06;
                 if (buffer == XOR)
@@ -859,7 +825,7 @@ int llclose(linkLayer connectionParameters, int showStatistics){
     /*o terminal volta as configurações originais devido ao facto de certas aplicações
     não definem as proprias configurações de terminal, por isso é importante voltar as definições originais*/
 
-    if (role == TRANSMITTER && j=1)
+    if (role == TRANSMITTER && j==1)
     { // Só para o noncanonical no final porque refere-se ao envio do AK
         i = 0;
         while (i <= 4)
@@ -879,16 +845,17 @@ int llclose(linkLayer connectionParameters, int showStatistics){
 
             if (res = write(fd, &buffer, 1) < 0)
             {
-                perror("Erro no envio do SET");
+                perror("Erro no envio do UA");
                 return -1;
             }
             buffer++;
 
             i++;
         }
-        printf("SET enviado com sucesso\n");
+        printf("UA enviado com sucesso\n");
     }
 
-    return 1;
+    close(fd);
+    return 0;
 
-} 
+}
